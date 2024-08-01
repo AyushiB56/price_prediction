@@ -1,3 +1,5 @@
+
+
 import tensorflow as tf
 
 tf.__version__
@@ -14,24 +16,30 @@ import yfinance as yf
 import pandas as pd
 
 
-ticker_symbol= "BTC-USD"
+ticker_symbol= "FET-GBP"
 
 #Use the Ticker function from yfinance to get data for the specified cryptocurrency ticker symbol.
 data = yf.Ticker(ticker_symbol)
+history_data_train = data.history(period='5y', start='2019-01-01', end='2023-8-31')
 
 
-history_data = data.history(period = '5y')
+history_data_test = data.history(period='1y', start='2023-10-01')
 
-History_dataset= history_data[['Open','High','Low','Close']]
+history_data_test
+
+history_data_train
+
+history_data_train= history_data_train[['Open','High','Low','Close']]
+history_data_test= history_data_test[['Open','High','Low','Close']]
 
 from sklearn.model_selection import train_test_split
 
 
-X = History_dataset.drop('Open', axis=1).values
-y = History_dataset['Open'].values
+X_train = history_data_train.drop('Open', axis=1).values
+y_train = history_data_train['Open'].values
 
-from sklearn.model_selection import train_test_split
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+X_test = history_data_test.drop('Open', axis=1).values
+y_test = history_data_test['Open'].values
 
 # Normalize the data
 from sklearn.preprocessing import StandardScaler
@@ -46,6 +54,8 @@ X_test = scaler.fit_transform(X_test)
 
 y_train = scaler.fit_transform(y_train)
 y_test = scaler.fit_transform(y_test)
+
+X_test
 
 """Using GRU"""
 
@@ -64,13 +74,20 @@ model.add(GRU(50, return_sequences=False))
 model.add(Dense(1))
 
 model.compile(optimizer='adam', loss='mse')
+
+# Now try fitting the model again
 model.fit(X_train, y_train, epochs=50, batch_size=32, validation_data=(X_test, y_test), verbose=1)
+
 test_predict= model.predict(X_test)
 
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 import math
 root_mean_square_error = math.sqrt(mean_squared_error(y_test, test_predict))
 print(f"RMSE of Test: {root_mean_square_error}")
+
+
+R2 = math.sqrt(r2_score(y_test, test_predict))
+print(f"R2 of Test: {R2}")
 
 """Using Random Forest"""
 
@@ -86,3 +103,5 @@ predicted_value = regressor_model.predict(X_test)
 root_mean_square_error = math.sqrt(mean_squared_error(y_test,predicted_value))
 print(f"RMSE of Test: {root_mean_square_error}")
 
+R2_random_forest = math.sqrt(r2_score(y_test, predicted_value))
+print(f"R2 of Test: {R2_random_forest}")
